@@ -11,4 +11,5 @@ COPY . .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # 5️⃣ Commande pour lancer le programme
-CMD ["python", "main.py", "bitcoin"]
+ENTRYPOINT ["python","main.py"]
+CMD ["bitcoin"]
