@@ -1,10 +1,18 @@
-import requests
-from rich import print
+import argparse
+from api import get_crypto_price
 
-print("[bold green]Hello from Crypto CLI Tracker APP![/bold green]")
+def main():
+    parser = argparse.ArgumentParser(description="Crypto CLI Tracker")
+    parser.add_argument("symbol", help="Symbole de la crypto (ex: bitcoin, ethereum, solana)")
+    parser.add_argument("--currency", default="usd", help="Devise (usd, eur, etc.)")
 
-response = requests.get("https://api.coingecko.com/api/v3/ping")
-if response.status_code == 200:
-    print("[cyan]API OK![/cyan]")
-else:
-    print("[red]API Error[/red]")
+    args = parser.parse_args()
+
+    try:
+        price = get_crypto_price(args.symbol.lower(), args.currency.lower())
+        print(f"💰 {args.symbol.upper()} = {price} {args.currency.upper()}")
+    except Exception as e:
+        print(f"❌ Erreur : {e}")
+
+if __name__ == "__main__":
+    main()
