@@ -1,0 +1,8 @@
+{
+    "currency": "EUR",
+    "favorites": [
+        "bitcoin",
+        "ethereum"
+    ],
+    "api_source": "coingecko"
+}
