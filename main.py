@@ -1,58 +1,56 @@
-# import sys
-# import argparse
-# from cointracker.api import get_crypto_price
-# from cointracker.config import load_config, save_config
-#
-# def main():
-#     # Cas spécial : changer la devise
-#     if len(sys.argv) > 2 and sys.argv[1] == "set-currency":
-#         new_currency = sys.argv[2].upper()
-#         config = load_config()
-#         config["currency"] = new_currency
-#         save_config(config)
-#         print(f"✅ Devise changée en {new_currency}")
-#         return
-#
-#     # Charger la configuration
-#     config = load_config()
-#
-#     # Parser les arguments pour une requête normale
-#     parser = argparse.ArgumentParser(description="Crypto CLI Tracker")
-#     parser.add_argument("symbol", nargs="?", help="Symbole de la crypto (ex: bitcoin, ethereum, solana)")
-#     parser.add_argument("--currency", help=f"Devise (par défaut : {config['currency']})")
-#
-#     args = parser.parse_args()
-#
-#     # Si aucun symbole → afficher la config
-#     if not args.symbol:
-#         print(f"💾 Configuration actuelle :")
-#         print(f"  Devise par défaut : {config['currency']}")
-#         print(f"  Cryptos favorites : {', '.join(config['favorites'])}")
-#         return
-#
-#     # Utiliser la devise passée ou celle du fichier config
-#     currency = args.currency.lower() if args.currency else config["currency"].lower()
-#
-#     # Appel API
-#     try:
-#         price = get_crypto_price(args.symbol.lower(), currency)
-#         print(f"💰 {args.symbol.upper()} = {price} {currency.upper()}")
-#     except Exception as e:
-#         print(f"❌ Erreur : {e}")
-#
 from cointracker.api import get_crypto_price
+from plyer import notification
+import argparse
+import requests
+import sys
 
 
 def main():
 
-    bitcoin_price = get_crypto_price("bitcoin", "eur")
-    ethereum_price = get_crypto_price("ethereum", "eur")
-    solana_price = get_crypto_price("solana", "eur")
+    parser = argparse.ArgumentParser()                                      # Permet de pouvoir saisir des arguments dans le terminal
+    parser.add_argument("symbol",nargs="*",default="bitcoin")  # 1er arguments -> symbol        # nargs = * -> 0 ou plusieurs args
+                                                                                                             # pas avec nargs
+    parser.add_argument("--currency", default="eur")            # 2eme arguments -> --currency
 
-    print(f"Prix du Bitcoin : {bitcoin_price} EUR")
-    print(f"Prix de l'Ethereum : {ethereum_price} EUR")
-    print(f"Prix du Solana : {solana_price} EUR")
+    parser.add_argument("--alert",type = float)
+    args = parser.parse_args()                                              # Récupère les arguments
 
+    try:
+        if args.alert and len(args.symbol) > 1:
+            print("Veuillez saisir une seule crypto pour mettre une alerte.")
+            sys.exit()
+
+        elif args.alert:
+            print(f"⚠️ Alerte mise en place pour {args.symbol[0]}  à {args.alert} {args.currency}")
+
+            price = get_crypto_price(args.symbol[0], args.currency)
+
+            if price == args.alert:
+                notification.notify(
+                    title=f"Alerte {args.symbol[0]}",
+                    message=f"{args.symbol[0]} a atteint {price} {args.currency} !",
+                    timeout=5
+                )
+    except Exception as e:
+        print(f"Erreur lors de la mise en place de l'alerte : {e}")
+
+
+
+    try:
+        print("__________CoinTrakcer__________\n")
+        for coin in args.symbol :
+            price = get_crypto_price(coin, args.currency)            # Appel de la fonction avec les paramètres du terminal
+            print(f"Valeur de {coin} : {price} {args.currency}")
+            print("____________________\n")
+
+    except requests.exceptions.RequestException as e:
+        print("❌ Erreur de connexion à l’API CoinGecko :", e)
+
+    except KeyError:
+        print(f"⚠️ Crypto '{args.symbol}' ou devise '{args.currency}' non reconnue par l’API.")
+
+    except Exception as e:
+        print("❌ Une erreur inattendue est survenue :", e)
 
 if __name__ == "__main__":
     main()
